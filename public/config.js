@@ -1,1 +1,1 @@
-window.API_BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:5001';
+window.API_BASE_URL = window.API_BASE_URL || 'https://parkingmanager-7su5.onrender.com';
