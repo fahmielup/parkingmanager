@@ -1,0 +1,5 @@
+/dashboard    /index.html    200
+/login       /login.html    200
+/forgot-password    /forgot_password.html    200
+/reset-password    /reset_password.html    200
+/*           /index.html    200

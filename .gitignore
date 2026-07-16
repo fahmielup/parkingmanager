@@ -1,0 +1,19 @@
+# Secrets - NEVER commit
+.env
+serviceAccountKey.json
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Data & backups
+db/
+backups/
+receipts/
+
+# Flutter/Dart
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins*
+mobile/android/local.properties

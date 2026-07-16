@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parking Manager</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="app main-bg">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">P</div>
+        <div class="brand-text">
+          <h1>AMD Parking</h1>
+          <span>Amieeco Duff Ent.</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <div class="nav-group" data-group="parking">
+          <button class="nav-group-header" type="button">
+            <span class="icon">&#x1F3E0;</span>
+            <span>AMD Parking</span>
+            <span class="nav-toggle">&#x25BC;</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item active" data-view="dashboard">
+              <span class="icon">&#x1F4CA;</span>
+              <span>Dashboard</span>
+            </button>
+            <button class="nav-item" data-view="receipts">
+              <span class="icon">&#x1F4C3;</span>
+              <span>Invoice AMD Parking</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="nav-item" data-view="create">
+          <span class="icon">&#x2795;</span>
+          <span>Buat Invoice</span>
+        </button>
+        <button class="nav-item" data-view="whatsapp">
+          <span class="icon">&#x1F4F1;</span>
+          <span>Resit Bayaran</span>
+        </button>
+
+        <div class="nav-group" data-group="vista-tiara">
+          <button class="nav-group-header" type="button">
+            <span class="icon">&#x1F682;</span>
+            <span>Vista Tiara Transport</span>
+            <span class="nav-toggle">&#x25BC;</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item" data-view="vista-tiara">
+              <span class="icon">&#x1F465;</span>
+              <span>Pelanggan VT</span>
+            </button>
+            <button class="nav-item" data-view="vt-invoices">
+              <span class="icon">&#x1F4C3;</span>
+              <span>Invoice Vista Tiara</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-group" data-group="danga-bay">
+          <button class="nav-group-header" type="button">
+            <span class="icon">&#x1F682;</span>
+            <span>Danga Bay Transport</span>
+            <span class="nav-toggle">&#x25BC;</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item" data-view="danga-bay">
+              <span class="icon">&#x1F465;</span>
+              <span>Pelanggan DB</span>
+            </button>
+            <button class="nav-item" data-view="db-invoices">
+              <span class="icon">&#x1F4C3;</span>
+              <span>Invoice Danga Bay</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-group" data-group="warung">
+          <button class="nav-group-header" type="button">
+            <span class="icon">&#x1F3EA;</span>
+            <span>Penyewa Warung</span>
+            <span class="nav-toggle">&#x25BC;</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item" data-view="warung">
+              <span class="icon">&#x1F465;</span>
+              <span>Pelanggan Warung</span>
+            </button>
+            <button class="nav-item" data-view="warung-invoices">
+              <span class="icon">&#x1F4C3;</span>
+              <span>Invoice Warung</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-group" data-group="settings">
+          <button class="nav-group-header" type="button">
+            <span class="icon">&#x2699;</span>
+            <span>Tetapan</span>
+            <span class="nav-toggle">&#x25BC;</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item" data-view="settings">
+              <span class="icon">&#x2699;</span>
+              <span>Tetapan</span>
+            </button>
+            <button class="nav-item admin-only" data-view="users" style="display:none;">
+              <span class="icon">&#x1F465;</span>
+              <span>Pengguna</span>
+            </button>
+            <button class="nav-item admin-only" data-view="audit" style="display:none;">
+              <span class="icon">&#x1F4CB;</span>
+              <span>Audit Log</span>
+            </button>
+            <button class="nav-item admin-only" data-view="backup" style="display:none;">
+              <span class="icon">&#x1F4BE;</span>
+              <span>Backup</span>
+            </button>
+            <button class="nav-item admin-only" data-view="history" style="display:none;">
+              <span class="icon">&#x1F4D1;</span>
+              <span>History</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <p>Data disimpan secara lokal</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2 id="page-title">Dashboard</h2>
+        <div class="topbar-actions">
+          <span id="user-info" class="user-info" style="margin-right:12px;font-size:14px;color:var(--text-light);"></span>
+          <button id="refresh-btn" class="btn btn-secondary">Refresh</button>
+          <button id="logout-btn" class="btn btn-danger">Log Keluar</button>
+        </div>
+      </header>
+
+      <section id="view-dashboard" class="view active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Pelanggan Bulanan Aktif</div>
+            <div class="stat-value" id="stat-active-monthly">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pelanggan Harian Aktif</div>
+            <div class="stat-value" id="stat-active-daily">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tamat / Batal</div>
+            <div class="stat-value" id="stat-terminated">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Bayaran Diterima (RM)</div>
+            <div class="stat-value" id="stat-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Invoice Dikeluarkan (RM)</div>
+            <div class="stat-value" id="stat-invoice-revenue">0.00</div>
+          </div>
+        </div>
+
+        <div class="dashboard-actions" style="margin-bottom:20px;">
+          <button id="btn-add-customer" class="btn btn-primary">+ Tambah Pelanggan</button>
+          <button id="btn-receipts-view" class="btn btn-secondary">Lihat Invoice Terkini</button>
+          <button id="btn-clear-terminated" class="btn btn-danger">Clear All Terminated</button>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h3>Kereta Bulanan</h3>
+              <span class="badge badge-whatsapp" id="count-monthly">0</span>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Pelanggan</th>
+                    <th>No. Kenderaan</th>
+                    <th>Pakej</th>
+                    <th>Tarikh Tamat</th>
+                    <th>Status</th>
+                    <th>Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody id="monthly-customers"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h3>Kereta Harian</h3>
+              <span class="badge badge-active" id="count-daily">0</span>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Pelanggan</th>
+                    <th>No. Kenderaan</th>
+                    <th>Pakej</th>
+                    <th>Bayaran Terakhir</th>
+                    <th>Status</th>
+                    <th>Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody id="daily-customers"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>Invoice Terkini</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No. Invoice</th>
+                  <th>Pelanggan</th>
+                  <th>No. Kenderaan</th>
+                  <th>Pakej</th>
+                  <th>Jumlah</th>
+                  <th>Masa</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-receipts"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="dashboard-section admin-only" style="display:none;">
+          <h3>Graf Analitik</h3>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h4>Hasil 30 Hari</h4>
+              <canvas id="trend-chart" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+              <h4>Pecahan Pelan</h4>
+              <canvas id="plan-chart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-receipts" class="view">
+        <div class="filter-bar">
+          <input type="text" id="search-input" placeholder="Cari pelanggan, no kenderaan, no invoice...">
+          <select id="filter-status">
+            <option value="">Semua Status</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <select id="filter-source">
+            <option value="">Semua Sumber</option>
+            <option value="System">Sistem</option>
+            <option value="WhatsApp">WhatsApp</option>
+          </select>
+          <select id="filter-plan">
+            <option value="">Semua Pakej</option>
+            <option value="Harian Parking">Harian Parking</option>
+            <option value="Harian + Transport">Harian + Transport</option>
+            <option value="Bulanan Parking">Bulanan Parking</option>
+            <option value="Bulanan + Transport">Bulanan + Transport</option>
+            <option value="Berbumbung">Berbumbung</option>
+            <option value="Berbumbung + Transport">Berbumbung + Transport</option>
+            <option value="Transport Sahaja">Transport Sahaja</option>
+            <option value="VT Transport Bulanan">Vista Tiara Transport</option>
+            <option value="VT Family Promo">Vista Tiara Family Promo</option>
+            <option value="DB Transport Bulanan">Danga Bay Transport</option>
+            <option value="DB Family Promo">Danga Bay Family Promo</option>
+          </select>
+          <input type="date" id="filter-date-from">
+          <input type="date" id="filter-date-to">
+          <button id="btn-search" class="btn btn-primary">Cari</button>
+          <button id="btn-export" class="btn btn-secondary">Export CSV</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No. Invoice</th>
+                <th>Pelanggan</th>
+                <th>No. Telefon</th>
+                <th>No. Kenderaan</th>
+                <th>Pakej</th>
+                <th>Status</th>
+                <th>Sumber</th>
+                <th>Jumlah (RM)</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="receipts-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-create" class="view">
+        <div class="invoice-tabs">
+          <button type="button" class="invoice-tab active" data-tab="parking">AMD Parking</button>
+          <button type="button" class="invoice-tab" data-tab="vista-tiara">Vista Tiara</button>
+          <button type="button" class="invoice-tab" data-tab="danga-bay">Danga Bay</button>
+          <button type="button" class="invoice-tab" data-tab="warung">Warung</button>
+        </div>
+
+        <!-- Tab: AMD Parking -->
+        <form id="create-form-parking" class="form-card tab-content active" data-zone="parking">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>No. Kenderaan</label>
+              <input type="text" name="vehicleNumber" required>
+            </div>
+            <div class="form-group">
+              <label>Masa Masuk</label>
+              <input type="datetime-local" name="entryTime">
+            </div>
+            <div class="form-group">
+              <label>Masa Keluar</label>
+              <input type="datetime-local" name="exitTime">
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="plan" id="create-plan-parking">
+                <option value="Harian Parking" data-amount="18" data-type="daily">Harian Parking - RM18/hari</option>
+                <option value="Harian + Transport" data-amount="28" data-type="daily">Harian + Transport - RM28/hari</option>
+                <option value="Bulanan Parking" data-amount="350" data-type="fixed">Bulanan Parking - RM350</option>
+                <option value="Bulanan + Transport" data-amount="380" data-type="fixed">Bulanan + Transport - RM380</option>
+                <option value="Berbumbung" data-amount="380" data-type="fixed">Berbumbung - RM380</option>
+                <option value="Berbumbung + Transport" data-amount="410" data-type="fixed">Berbumbung + Transport - RM410</option>
+                <option value="Transport Sahaja" data-amount="30" data-type="daily">Transport Sahaja - RM30/hari</option>
+              </select>
+            </div>
+            <div class="form-group" id="kadar-group">
+              <label>Kadar Seunit (RM) <small id="kadar-hint" style="color:var(--text-light);"></small></label>
+              <input type="number" step="0.01" name="ratePerHour" id="kadar-input" value="18.00">
+            </div>
+            <div class="form-group" id="diskaun-group">
+              <label>Diskaun (RM) <small style="color:var(--text-light);">Kosongkan jika tiada</small></label>
+              <input type="number" step="0.01" name="discount" id="diskaun-input" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Jumlah (RM)</label>
+              <input type="number" step="0.01" name="amount" id="amount-input" value="18.00">
+            </div>
+            <div class="form-group">
+              <label>Kaedah Pembayaran</label>
+              <select name="paymentMethod">
+                <option value="Cash">Tunai</option>
+                <option value="Online Transfer">Online Transfer</option>
+                <option value="QR">QR / eWallet</option>
+                <option value="Card">Kad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="status">
+                <option value="Pending">Pending</option>
+                <option value="Selesai">Selesai</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="notes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="btn-auto-calc" class="btn btn-secondary">Kira Auto</button>
+            <button type="submit" class="btn btn-primary">Simpan & Cetak</button>
+          </div>
+        </form>
+
+        <!-- Tab: Vista Tiara -->
+        <form id="create-form-vt" class="form-card tab-content" data-zone="vista-tiara">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama</label>
+              <input type="text" name="customerName" required>
+            </div>
+            <div class="form-group">
+              <label>Pax</label>
+              <input type="number" name="pax" id="vt-pax" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="plan" id="vt-plan" disabled>
+                <option value="VT Transport Bulanan" selected>VT Transport Bulanan - 1st Pax RM360 / 2nd+ RM180</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Jumlah (RM) <small id="vt-hint" style="color:var(--text-light);"></small></label>
+              <input type="number" step="0.01" name="amount" id="vt-amount" value="360.00" readonly>
+            </div>
+            <div class="form-group">
+              <label>Kaedah Pembayaran</label>
+              <select name="paymentMethod">
+                <option value="Cash">Tunai</option>
+                <option value="Online Transfer">Online Transfer</option>
+                <option value="QR">QR / eWallet</option>
+                <option value="Card">Kad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="status">
+                <option value="Pending">Pending</option>
+                <option value="Selesai">Selesai</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="notes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Simpan & Cetak</button>
+          </div>
+        </form>
+
+        <!-- Tab: Danga Bay -->
+        <form id="create-form-db" class="form-card tab-content" data-zone="danga-bay">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama</label>
+              <input type="text" name="customerName" required>
+            </div>
+            <div class="form-group">
+              <label>Pax</label>
+              <input type="number" name="pax" id="db-pax" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="plan" id="db-plan" disabled>
+                <option value="DB Transport Bulanan" selected>DB Transport Bulanan - 1st Pax RM400 / 2nd+ RM180</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Jumlah (RM) <small id="db-hint" style="color:var(--text-light);"></small></label>
+              <input type="number" step="0.01" name="amount" id="db-amount" value="400.00" readonly>
+            </div>
+            <div class="form-group">
+              <label>Kaedah Pembayaran</label>
+              <select name="paymentMethod">
+                <option value="Cash">Tunai</option>
+                <option value="Online Transfer">Online Transfer</option>
+                <option value="QR">QR / eWallet</option>
+                <option value="Card">Kad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="status">
+                <option value="Pending">Pending</option>
+                <option value="Selesai">Selesai</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="notes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Simpan & Cetak</button>
+          </div>
+        </form>
+
+        <!-- Tab: Warung -->
+        <form id="create-form-warung" class="form-card tab-content" data-zone="warung">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama</label>
+              <input type="text" name="customerName" required>
+            </div>
+            <div class="form-group">
+              <label>Pax</label>
+              <input type="number" name="pax" id="wg-pax" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="plan" id="wg-plan" disabled>
+                <option value="Warung Bulanan" selected>Warung Bulanan - RM400/bulan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Jumlah (RM)</label>
+              <input type="number" step="0.01" name="amount" id="wg-amount" value="400.00" readonly>
+            </div>
+            <div class="form-group">
+              <label>Kaedah Pembayaran</label>
+              <select name="paymentMethod">
+                <option value="Cash">Tunai</option>
+                <option value="Online Transfer">Online Transfer</option>
+                <option value="QR">QR / eWallet</option>
+                <option value="Card">Kad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="status">
+                <option value="Pending">Pending</option>
+                <option value="Selesai">Selesai</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="notes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Simpan & Cetak</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="view-whatsapp" class="view">
+        <form id="whatsapp-form" class="form-card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Gambar/PDF Resit Bayaran</label>
+              <input type="file" id="wa-file" accept="image/*,.pdf" required>
+            </div>
+            <div class="form-group">
+              <label>Nama Pelanggan</label>
+              <input type="text" name="customerName" placeholder="Nama pelanggan">
+            </div>
+            <div class="form-group">
+              <label>No. Telefon</label>
+              <input type="text" name="phone" placeholder="No telefon pelanggan">
+            </div>
+            <div class="form-group">
+              <label>No. Kenderaan</label>
+              <input type="text" name="vehicleNumber" placeholder="Contoh: ABC1234">
+            </div>
+            <div class="form-group">
+              <label>Kod Slot</label>
+              <input type="text" name="slotCode">
+            </div>
+            <div class="form-group">
+              <label>Jumlah (RM)</label>
+              <input type="number" step="0.01" name="amount" value="0.00">
+            </div>
+            <div class="form-group">
+              <label>Kaedah Pembayaran</label>
+              <select name="paymentMethod">
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Cash">Tunai</option>
+                <option value="QR">QR / eWallet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="plan" id="wa-plan">
+                <option value="Harian Parking" data-amount="18">Harian Parking - RM18</option>
+                <option value="Harian + Transport" data-amount="28">Harian + Transport - RM28</option>
+                <option value="Bulanan Parking" data-amount="350">Bulanan Parking - RM350</option>
+                <option value="Bulanan + Transport" data-amount="380">Bulanan + Transport - RM380</option>
+                <option value="Berbumbung" data-amount="380">Berbumbung - RM380</option>
+                <option value="Berbumbung + Transport" data-amount="410">Berbumbung + Transport - RM410</option>
+                <option value="Transport Sahaja" data-amount="30">Transport Sahaja - RM30</option>
+                <option value="VT Transport Bulanan" data-amount="360">Vista Tiara Transport - RM360</option>
+                <option value="VT Family Promo" data-amount="180">Vista Tiara Family Promo - RM180/pax</option>
+                <option value="DB Transport Bulanan" data-amount="400">Danga Bay Transport - RM400</option>
+                <option value="DB Family Promo" data-amount="180">Danga Bay Family Promo - RM180/pax</option>
+                <option value="Warung Bulanan" data-amount="400">Warung Bulanan - RM400</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="notes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Simpan Resit Bayaran</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="view-vista-tiara" class="view">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Pelanggan Aktif Vista Tiara</div>
+            <div class="stat-value" id="vt-stat-active">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Pax</div>
+            <div class="stat-value" id="vt-stat-pax">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Bayaran Diterima (RM)</div>
+            <div class="stat-value" id="vt-stat-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Invoice Dikeluarkan (RM)</div>
+            <div class="stat-value" id="vt-stat-invoice-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tamat / Batal</div>
+            <div class="stat-value" id="vt-stat-terminated">0</div>
+          </div>
+        </div>
+        <div class="dashboard-actions" style="margin-bottom:20px;">
+          <button id="btn-add-vt-customer" class="btn btn-primary">+ Tambah Pelanggan Transport</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>No. Telefon</th>
+                <th>Pakej</th>
+                <th>Pax</th>
+                <th>Jumlah (RM)</th>
+                <th>Tarikh Mula</th>
+                <th>Tarikh Tamat</th>
+                <th>Status</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="vt-customers-table"></tbody>
+          </table>
+        </div>
+        <div class="dashboard-section" style="margin-top:24px;">
+          <h3>Invoice Terkini Vista Tiara</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No. Invoice</th>
+                  <th>Pelanggan</th>
+                  <th>Pakej</th>
+                  <th>Jumlah</th>
+                  <th>Status</th>
+                  <th>Masa</th>
+                </tr>
+              </thead>
+              <tbody id="vt-recent-receipts"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-danga-bay" class="view">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Pelanggan Aktif Danga Bay</div>
+            <div class="stat-value" id="db-stat-active">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Pax</div>
+            <div class="stat-value" id="db-stat-pax">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Bayaran Diterima (RM)</div>
+            <div class="stat-value" id="db-stat-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Invoice Dikeluarkan (RM)</div>
+            <div class="stat-value" id="db-stat-invoice-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tamat / Batal</div>
+            <div class="stat-value" id="db-stat-terminated">0</div>
+          </div>
+        </div>
+        <div class="dashboard-actions" style="margin-bottom:20px;">
+          <button id="btn-add-db-customer" class="btn btn-primary">+ Tambah Pelanggan Transport</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>No. Telefon</th>
+                <th>Pakej</th>
+                <th>Pax</th>
+                <th>Jumlah (RM)</th>
+                <th>Tarikh Mula</th>
+                <th>Tarikh Tamat</th>
+                <th>Status</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="db-customers-table"></tbody>
+          </table>
+        </div>
+        <div class="dashboard-section" style="margin-top:24px;">
+          <h3>Invoice Terkini Danga Bay</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No. Invoice</th>
+                  <th>Pelanggan</th>
+                  <th>Pakej</th>
+                  <th>Jumlah</th>
+                  <th>Status</th>
+                  <th>Masa</th>
+                </tr>
+              </thead>
+              <tbody id="db-recent-receipts"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-vt-invoices" class="view">
+        <div class="filter-bar">
+          <input type="text" id="vt-search-input" placeholder="Cari pelanggan, no invoice...">
+          <select id="vt-filter-status">
+            <option value="">Semua Status</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <select id="vt-filter-plan">
+            <option value="">Semua Pakej</option>
+            <option value="VT Transport Bulanan">Vista Tiara Transport</option>
+            <option value="VT Family Promo">Vista Tiara Family Promo</option>
+          </select>
+          <select id="vt-filter-source">
+            <option value="">Semua Sumber</option>
+            <option value="System">Sistem</option>
+            <option value="WhatsApp">WhatsApp</option>
+          </select>
+          <input type="date" id="vt-filter-date-from">
+          <input type="date" id="vt-filter-date-to">
+          <button id="vt-btn-search" class="btn btn-primary">Cari</button>
+          <button id="vt-btn-export" class="btn btn-secondary">Export CSV</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No. Invoice</th>
+                <th>Pelanggan</th>
+                <th>No. Telefon</th>
+                <th>Pakej</th>
+                <th>Status</th>
+                <th>Sumber</th>
+                <th>Jumlah (RM)</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="vt-invoices-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-db-invoices" class="view">
+        <div class="filter-bar">
+          <input type="text" id="db-search-input" placeholder="Cari pelanggan, no invoice...">
+          <select id="db-filter-status">
+            <option value="">Semua Status</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <select id="db-filter-plan">
+            <option value="">Semua Pakej</option>
+            <option value="DB Transport Bulanan">Danga Bay Transport</option>
+            <option value="DB Family Promo">Danga Bay Family Promo</option>
+          </select>
+          <select id="db-filter-source">
+            <option value="">Semua Sumber</option>
+            <option value="System">Sistem</option>
+            <option value="WhatsApp">WhatsApp</option>
+          </select>
+          <input type="date" id="db-filter-date-from">
+          <input type="date" id="db-filter-date-to">
+          <button id="db-btn-search" class="btn btn-primary">Cari</button>
+          <button id="db-btn-export" class="btn btn-secondary">Export CSV</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No. Invoice</th>
+                <th>Pelanggan</th>
+                <th>No. Telefon</th>
+                <th>Pakej</th>
+                <th>Status</th>
+                <th>Sumber</th>
+                <th>Jumlah (RM)</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="db-invoices-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-warung" class="view">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Penyewa Aktif Warung</div>
+            <div class="stat-value" id="wg-stat-active">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Pax</div>
+            <div class="stat-value" id="wg-stat-pax">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Bayaran Diterima (RM)</div>
+            <div class="stat-value" id="wg-stat-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Invoice Dikeluarkan (RM)</div>
+            <div class="stat-value" id="wg-stat-invoice-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tamat / Batal</div>
+            <div class="stat-value" id="wg-stat-terminated">0</div>
+          </div>
+        </div>
+        <div class="dashboard-actions" style="margin-bottom:20px;">
+          <button id="btn-add-wg-customer" class="btn btn-primary">+ Tambah Penyewa Warung</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>No. Telefon</th>
+                <th>Pakej</th>
+                <th>Pax</th>
+                <th>Jumlah (RM)</th>
+                <th>Tarikh Mula</th>
+                <th>Tarikh Tamat</th>
+                <th>Status</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="wg-customers-table"></tbody>
+          </table>
+        </div>
+        <div class="dashboard-section" style="margin-top:24px;">
+          <h3>Invoice Terkini Warung</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No. Invoice</th>
+                  <th>Pelanggan</th>
+                  <th>Pakej</th>
+                  <th>Jumlah</th>
+                  <th>Status</th>
+                  <th>Masa</th>
+                </tr>
+              </thead>
+              <tbody id="wg-recent-receipts"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-warung-invoices" class="view">
+        <div class="filter-bar">
+          <input type="text" id="wg-search-input" placeholder="Cari pelanggan, no invoice...">
+          <select id="wg-filter-status">
+            <option value="">Semua Status</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <select id="wg-filter-plan">
+            <option value="">Semua Pakej</option>
+            <option value="Warung Bulanan">Warung Bulanan</option>
+          </select>
+          <select id="wg-filter-source">
+            <option value="">Semua Sumber</option>
+            <option value="System">Sistem</option>
+            <option value="WhatsApp">WhatsApp</option>
+          </select>
+          <input type="date" id="wg-filter-date-from">
+          <input type="date" id="wg-filter-date-to">
+          <button id="wg-btn-search" class="btn btn-primary">Cari</button>
+          <button id="wg-btn-export" class="btn btn-secondary">Export CSV</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No. Invoice</th>
+                <th>Pelanggan</th>
+                <th>No. Telefon</th>
+                <th>Pakej</th>
+                <th>Status</th>
+                <th>Sumber</th>
+                <th>Jumlah (RM)</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="wg-invoices-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-settings" class="view">
+        <form id="settings-form" class="form-card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama Syarikat</label>
+              <input type="text" name="companyName">
+            </div>
+            <div class="form-group">
+              <label>Alamat Syarikat</label>
+              <input type="text" name="companyAddress">
+            </div>
+            <div class="form-group">
+              <label>No. Telefon Syarikat</label>
+              <input type="text" name="companyPhone">
+            </div>
+            <div class="form-group">
+              <label>Email Syarikat</label>
+              <input type="text" name="companyEmail">
+            </div>
+            <div class="form-group">
+              <label>No. Pendaftaran Syarikat</label>
+              <input type="text" name="companyRegNo">
+            </div>
+            <div class="form-group">
+              <label>Akaun Bank</label>
+              <input type="text" name="bankAccount">
+            </div>
+            <div class="form-group">
+              <label>Tajuk Resit</label>
+              <input type="text" name="receiptTitle" value="PAYMENT RECEIPT">
+            </div>
+            <div class="form-group">
+              <label>Kadar Default Sejam (RM)</label>
+              <input type="number" step="0.01" name="ratePerHour">
+            </div>
+            <div class="form-group full-width">
+              <label>Logo Syarikat</label>
+              <input type="file" id="company-logo-input" accept="image/*">
+              <input type="hidden" name="companyLogo">
+              <div id="company-logo-preview" style="margin-top:8px;max-width:120px;"></div>
+            </div>
+            <div class="form-group full-width">
+              <label>Kod QR Pembayaran</label>
+              <input type="file" id="company-qr-input" accept="image/*">
+              <input type="hidden" name="companyQrCode">
+              <div id="company-qr-preview" style="margin-top:8px;max-width:120px;"></div>
+            </div>
+            <div class="form-group full-width">
+              <label>Nota Kaki Resit</label>
+              <textarea name="receiptFooter" rows="3">Thank you for your payment.</textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Lokasi Simpan Resit (Base Path)</label>
+              <input type="text" name="receiptsBasePath" placeholder="Contoh: C:\Users\USER\Desktop\ALL RECEIPT">
+              <small>Biarkan kosong untuk simpan dalam folder projek. App akan auto-create subfolder MONTHLY/JUL 2026.</small>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Simpan Tetapan</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="view-users" class="view admin-only" style="display:none;">
+        <div class="form-card">
+          <h3 style="margin-bottom:16px;">Tambah Pengguna</h3>
+          <form id="user-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Nama Penuh</label>
+                <input type="text" name="name" required>
+              </div>
+              <div class="form-group">
+                <label>Nama Pengguna</label>
+                <input type="text" name="username" required>
+              </div>
+              <div class="form-group">
+                <label>Kata Laluan</label>
+                <input type="password" name="password" required minlength="6" placeholder="Minimum 6 aksara">
+              </div>
+              <div class="form-group">
+                <label>Peranan</label>
+                <select name="role">
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Tambah Pengguna</button>
+            </div>
+            <div id="user-form-error" style="margin-top: 12px; color: #c0392b; font-weight: 600; display: none;"></div>
+          </form>
+        </div>
+        <div class="table-container" style="margin-top:24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Username</th>
+                <th>Peranan</th>
+                <th>Status</th>
+                <th>Dicipta</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="users-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-audit" class="view admin-only" style="display:none;">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Masa</th>
+                <th>Pengguna</th>
+                <th>Tindakan</th>
+                <th>Butiran</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-backup" class="view admin-only" style="display:none;">
+        <div class="form-card">
+          <h3 style="margin-bottom:16px;">Backup Data</h3>
+          <p style="margin-bottom:16px;color:var(--text-light);">Backup akan simpan database, tetapan, dan semua fail resit dalam satu fail zip.</p>
+          <button id="btn-backup" class="btn btn-primary">Buat Backup Sekarang</button>
+        </div>
+        <div class="table-container" style="margin-top:24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama Backup</th>
+                <th>Saiz</th>
+                <th>Tarikh</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="backup-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-history" class="view admin-only" style="display:none;">
+        <div class="form-card">
+          <h3 style="margin-bottom:16px;">Rekod History</h3>
+          <p style="margin-bottom:16px;color:var(--text-light);">Senarai pelanggan bulanan dan harian yang telah di-terminate.</p>
+          <button id="btn-clear-history" class="btn btn-danger">Clear All</button>
+        </div>
+        <div class="table-container" style="margin-top:24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tarikh Terminate</th>
+                <th>Pelanggan</th>
+                <th>No. Kenderaan</th>
+                <th>Pakej</th>
+                <th>Tarikh Tamat</th>
+                <th>Terminate Oleh</th>
+                <th>Nota</th>
+              </tr>
+            </thead>
+            <tbody id="history-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Resit</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <div id="customer-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="customer-modal-title">Pelanggan</h3>
+        <button class="modal-close" id="customer-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="customer-form">
+          <input type="hidden" name="customerId">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama Pelanggan</label>
+              <input type="text" name="customerName" required>
+            </div>
+            <div class="form-group">
+              <label>No. Telefon</label>
+              <input type="text" name="customerPhone">
+            </div>
+            <div class="form-group">
+              <label>No. Kenderaan</label>
+              <input type="text" name="vehicleNumber" required>
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="customerPlan" id="customer-plan">
+                <option value="Harian Parking" data-amount="18">Harian Parking - RM18</option>
+                <option value="Harian + Transport" data-amount="28">Harian + Transport - RM28</option>
+                <option value="Bulanan Parking" data-amount="350">Bulanan Parking - RM350</option>
+                <option value="Bulanan + Transport" data-amount="380">Bulanan + Transport - RM380</option>
+                <option value="Berbumbung" data-amount="380">Berbumbung - RM380</option>
+                <option value="Berbumbung + Transport" data-amount="410">Berbumbung + Transport - RM410</option>
+                <option value="Transport Sahaja" data-amount="30">Transport Sahaja - RM30</option>
+                <option value="VT Transport Bulanan" data-amount="360">Vista Tiara Transport - RM360</option>
+                <option value="VT Family Promo" data-amount="180">Vista Tiara Family Promo - RM180/pax</option>
+                <option value="DB Transport Bulanan" data-amount="400">Danga Bay Transport - RM400</option>
+                <option value="DB Family Promo" data-amount="180">Danga Bay Family Promo - RM180/pax</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="customerStatus">
+                <option value="Active">Aktif</option>
+                <option value="Terminated">Tamat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tarikh Mula</label>
+              <input type="date" name="startDate">
+            </div>
+            <div class="form-group">
+              <label>Tarikh Tamat</label>
+              <input type="date" name="endDate">
+            </div>
+            <div class="form-group">
+              <label>Kadar Bulanan (RM)</label>
+              <input type="number" step="0.01" name="monthlyRate" value="0">
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="customerNotes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary modal-close-btn">Tutup</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="transport-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="transport-modal-title">Pelanggan Transport</h3>
+        <button class="modal-close" id="transport-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="transport-form">
+          <input type="hidden" name="transportId">
+          <input type="hidden" name="transportZone" id="transport-zone">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama Pelanggan</label>
+              <input type="text" name="transportName" required>
+            </div>
+            <div class="form-group">
+              <label>No. Telefon</label>
+              <input type="text" name="transportPhone">
+            </div>
+            <div class="form-group">
+              <label>Pakej</label>
+              <select name="transportPackage" id="transport-package">
+                <option value="VT Transport Bulanan" data-amount="360">Vista Tiara Transport - RM360/bulan</option>
+                <option value="VT Family Promo" data-amount="180">Vista Tiara Family Promo - RM180/pax</option>
+                <option value="DB Transport Bulanan" data-amount="400">Danga Bay Transport - RM400/bulan</option>
+                <option value="DB Family Promo" data-amount="180">Danga Bay Family Promo - RM180/pax</option>
+                <option value="Warung Bulanan" data-amount="400">Warung Bulanan - RM400/bulan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Bilangan Pax</label>
+              <input type="number" name="transportPax" id="transport-pax" value="1" min="1">
+            </div>
+            <div class="form-group">
+              <label>Jumlah (RM)</label>
+              <input type="number" step="0.01" name="transportAmount" id="transport-amount" value="360.00">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="transportStatus">
+                <option value="Active">Aktif</option>
+                <option value="Terminated">Tamat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tarikh Mula</label>
+              <input type="date" name="transportStartDate">
+            </div>
+            <div class="form-group">
+              <label>Tarikh Tamat</label>
+              <input type="date" name="transportEndDate">
+            </div>
+            <div class="form-group full-width">
+              <label>Nota</label>
+              <textarea name="transportNotes" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary transport-close-btn">Tutup</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
