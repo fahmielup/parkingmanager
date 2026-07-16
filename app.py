@@ -2,7 +2,6 @@ import os
 import csv
 import io
 import json
-import shutil
 import base64
 import zipfile
 import secrets
@@ -18,6 +17,15 @@ from flask import Flask, request, jsonify, send_from_directory, send_file, redir
 from flask_cors import CORS
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
+
+BASE_DIR = Path(__file__).parent
+
+# Load environment variables from .env file if python-dotenv is installed
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except Exception:
+    pass
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
@@ -41,15 +49,6 @@ def set_security_headers(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
 
-BASE_DIR = Path(__file__).parent
-
-# Load environment variables from .env file if python-dotenv is installed
-try:
-    from dotenv import load_dotenv
-    load_dotenv(BASE_DIR / '.env')
-except Exception:
-    pass
-
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 DEFAULT_RECEIPTS_DIR = BASE_DIR / 'receipts'
 BACKUP_DIR = BASE_DIR / 'backups'
@@ -67,7 +66,6 @@ APP_BASE_URL = os.environ.get('APP_BASE_URL', f'http://127.0.0.1:{PORT}')
 if '127.0.0.1:' in APP_BASE_URL or 'localhost:' in APP_BASE_URL:
     APP_BASE_URL = f'http://127.0.0.1:{PORT}'
 
-SESSION_TIMEOUT_MINUTES = 30
 MAX_LOGIN_ATTEMPTS = 3
 LOGIN_LOCKOUT_MINUTES = 5
 
