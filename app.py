@@ -1243,7 +1243,50 @@ def api_audit_logs():
 def api_export_csv():
     conn = get_db()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('SELECT * FROM receipts ORDER BY created_at DESC')
+    query = 'SELECT * FROM receipts WHERE 1=1'
+    params = []
+    search = request.args.get('search', '')
+    if search:
+        query += ''' AND (
+            customer_name LIKE %s OR
+            vehicle_number LIKE %s OR
+            phone LIKE %s OR
+            receipt_number LIKE %s
+        )'''
+        like = f'%%{search}%%'
+        params.extend([like, like, like, like])
+    status = request.args.get('status', '')
+    if status:
+        query += ' AND status = %s'
+        params.append(status)
+    source = request.args.get('source', '')
+    if source:
+        query += ' AND source = %s'
+        params.append(source)
+    plan = request.args.get('plan', '')
+    if plan:
+        query += ' AND plan = %s'
+        params.append(plan)
+    zone = request.args.get('zone', '')
+    if zone:
+        if zone == 'vista-tiara':
+            query += " AND plan IN ('VT Transport Bulanan', 'VT Family Promo')"
+        elif zone == 'danga-bay':
+            query += " AND plan IN ('DB Transport Bulanan', 'DB Family Promo')"
+        elif zone == 'warung':
+            query += " AND plan IN ('Warung Bulanan')"
+        elif zone == 'parking':
+            query += " AND plan NOT IN ('VT Transport Bulanan', 'VT Family Promo', 'DB Transport Bulanan', 'DB Family Promo', 'Warung Bulanan')"
+    date_from = request.args.get('dateFrom', '')
+    if date_from:
+        query += ' AND created_at >= %s'
+        params.append(date_from)
+    date_to = request.args.get('dateTo', '')
+    if date_to:
+        query += ' AND created_at <= %s'
+        params.append(f'{date_to}T23:59:59')
+    query += ' ORDER BY created_at DESC'
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -1258,11 +1301,12 @@ def api_export_csv():
             row['entry_time'], row['exit_time'], row['duration_minutes'], row['source'], row['created_at']
         ])
     output.seek(0)
+    zone_label = f'_{zone}' if zone else ''
     return send_file(
         io.BytesIO(output.getvalue().encode('utf-8-sig')),
         mimetype='text/csv',
         as_attachment=True,
-        download_name=f'invoices_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        download_name=f'invoices_export{zone_label}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
     )
 
 

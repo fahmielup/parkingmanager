@@ -1615,31 +1615,39 @@ if (wgBtnSearch) {
   document.getElementById('wg-btn-export').addEventListener('click', () => exportZoneCSV('warung'));
 }
 
-function exportZoneCSV(zone) {
+async function exportZoneCSV(zone) {
   const prefix = zone === 'vista-tiara' ? 'vt' : zone === 'danga-bay' ? 'db' : 'wg';
-  const rows = document.querySelectorAll(`#${prefix}-invoices-table tr`);
-  if (!rows.length || (rows.length === 1 && rows[0].innerHTML.includes('Tiada'))) {
-    showToast('Tiada data untuk export');
-    return;
-  }
-  const headers = ['No. Invoice', 'Pelanggan', 'No. Telefon', 'Pakej', 'Status', 'Sumber', 'Jumlah (RM)'];
-  let csv = headers.join(',') + '\n';
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('td');
-    if (cells.length >= 7) {
-      const vals = [];
-      for (let i = 0; i < 7; i++) {
-        let text = cells[i].textContent.replace(/RM\s*/, '').trim();
-        text = '"' + text.replace(/"/g, '""') + '"';
-        vals.push(text);
-      }
-      csv += vals.join(',') + '\n';
+  const params = new URLSearchParams();
+  params.append('zone', zone);
+  const search = document.getElementById(`${prefix}-search-input`)?.value || '';
+  const status = document.getElementById(`${prefix}-filter-status`)?.value || '';
+  const plan = document.getElementById(`${prefix}-filter-plan`)?.value || '';
+  const source = document.getElementById(`${prefix}-filter-source`)?.value || '';
+  const dateFrom = document.getElementById(`${prefix}-filter-date-from`)?.value || '';
+  const dateTo = document.getElementById(`${prefix}-filter-date-to`)?.value || '';
+  if (search) params.append('search', search);
+  if (status) params.append('status', status);
+  if (plan) params.append('plan', plan);
+  if (source) params.append('source', source);
+  if (dateFrom) params.append('dateFrom', dateFrom);
+  if (dateTo) params.append('dateTo', dateTo);
+  const token = getToken();
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/export/csv?${params}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      showToast('Ralat: gagal export CSV');
+      return;
     }
-  });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `invoice_${zone}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  showToast('CSV dieksport');
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `invoice_${zone}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    showToast('CSV dieksport');
+  } catch (e) {
+    console.error('Export CSV error:', e);
+    showToast('Ralat rangkaian: gagal export CSV');
+  }
 }
