@@ -123,6 +123,10 @@
               <span class="icon">&#x1F4BE;</span>
               <span>Backup</span>
             </button>
+            <button class="nav-item admin-only" data-view="archives" style="display:none;">
+              <span class="icon">&#x1F4C2;</span>
+              <span>Arkib Bulanan</span>
+            </button>
             <button class="nav-item admin-only" data-view="history" style="display:none;">
               <span class="icon">&#x1F4D1;</span>
               <span>History</span>
@@ -284,6 +288,9 @@
           </select>
           <input type="date" id="filter-date-from">
           <input type="date" id="filter-date-to">
+          <select id="filter-month">
+            <option value="">Semua Bulan</option>
+          </select>
           <button id="btn-search" class="btn btn-primary">Cari</button>
           <button id="btn-export" class="btn btn-secondary">Export CSV</button>
         </div>
@@ -734,6 +741,9 @@
           </select>
           <input type="date" id="vt-filter-date-from">
           <input type="date" id="vt-filter-date-to">
+          <select id="vt-filter-month">
+            <option value="">Semua Bulan</option>
+          </select>
           <button id="vt-btn-search" class="btn btn-primary">Cari</button>
           <button id="vt-btn-export" class="btn btn-secondary">Export CSV</button>
         </div>
@@ -776,6 +786,9 @@
           </select>
           <input type="date" id="db-filter-date-from">
           <input type="date" id="db-filter-date-to">
+          <select id="db-filter-month">
+            <option value="">Semua Bulan</option>
+          </select>
           <button id="db-btn-search" class="btn btn-primary">Cari</button>
           <button id="db-btn-export" class="btn btn-secondary">Export CSV</button>
         </div>
@@ -881,6 +894,9 @@
           </select>
           <input type="date" id="wg-filter-date-from">
           <input type="date" id="wg-filter-date-to">
+          <select id="wg-filter-month">
+            <option value="">Semua Bulan</option>
+          </select>
           <button id="wg-btn-search" class="btn btn-primary">Cari</button>
           <button id="wg-btn-export" class="btn btn-secondary">Export CSV</button>
         </div>
@@ -1048,6 +1064,39 @@
               </tr>
             </thead>
             <tbody id="backup-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-archives" class="view admin-only" style="display:none;">
+        <div class="form-card">
+          <h3 style="margin-bottom:16px;">Arkib Bulanan</h3>
+          <p style="margin-bottom:16px;color:var(--text-light);">Arkib auto menyimpan semua invoice mengikut bulan dan zon. Backup ZIP juga disimpan di database.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <select id="archive-year" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;"></select>
+            <select id="archive-month" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;">
+              <option value="1">Januari</option><option value="2">Februari</option><option value="3">Mac</option>
+              <option value="4">April</option><option value="5">Mei</option><option value="6">Jun</option>
+              <option value="7">Julai</option><option value="8">Ogos</option><option value="9">September</option>
+              <option value="10">Oktober</option><option value="11">November</option><option value="12">Disember</option>
+            </select>
+            <button id="btn-archive-now" class="btn btn-primary">Archive Sekarang</button>
+            <button id="btn-auto-backup" class="btn btn-secondary">Backup ke DB</button>
+          </div>
+        </div>
+        <div class="table-container" style="margin-top:24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Bulan</th>
+                <th>Zon</th>
+                <th>Jumlah Invoice</th>
+                <th>Total Pendapatan (RM)</th>
+                <th>Tarikh Archive</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="archives-table"></tbody>
           </table>
         </div>
       </section>

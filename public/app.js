@@ -288,6 +288,7 @@ function showView(viewName) {
     users: 'Pengurusan Pengguna',
     audit: 'Audit Log',
     backup: 'Backup Data',
+    archives: 'Arkib Bulanan',
     history: 'History Record'
   };
   pageTitle.textContent = titles[viewName] || 'Parking Manager';
@@ -303,6 +304,7 @@ function showView(viewName) {
   if (viewName === 'users') loadUsers();
   if (viewName === 'audit') loadAuditLogs();
   if (viewName === 'backup') loadBackups();
+  if (viewName === 'archives') loadArchives();
   if (viewName === 'history') loadHistory();
 
   document.querySelectorAll('.nav-group').forEach(g => {
@@ -431,6 +433,7 @@ async function loadReceipts() {
       status: document.getElementById('filter-status').value,
       source: document.getElementById('filter-source').value,
       plan: document.getElementById('filter-plan').value,
+      month: document.getElementById('filter-month')?.value || '',
       dateFrom: document.getElementById('filter-date-from').value,
       dateTo: document.getElementById('filter-date-to').value
     };
@@ -1350,6 +1353,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadSettings();
   loadReceipts();
   loadStats();
+  loadMonths();
   document.getElementById('search-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') loadReceipts();
   });
@@ -1555,6 +1559,7 @@ async function loadZoneInvoices(zone) {
       status: document.getElementById(`${prefix}-filter-status`).value,
       plan: document.getElementById(`${prefix}-filter-plan`).value,
       source: document.getElementById(`${prefix}-filter-source`).value,
+      month: document.getElementById(`${prefix}-filter-month`)?.value || '',
       dateFrom: document.getElementById(`${prefix}-filter-date-from`).value,
       dateTo: document.getElementById(`${prefix}-filter-date-to`).value
     };
@@ -1625,10 +1630,12 @@ async function exportZoneCSV(zone) {
   const source = document.getElementById(`${prefix}-filter-source`)?.value || '';
   const dateFrom = document.getElementById(`${prefix}-filter-date-from`)?.value || '';
   const dateTo = document.getElementById(`${prefix}-filter-date-to`)?.value || '';
+  const monthVal = document.getElementById(`${prefix}-filter-month`)?.value || '';
   if (search) params.append('search', search);
   if (status) params.append('status', status);
   if (plan) params.append('plan', plan);
   if (source) params.append('source', source);
+  if (monthVal) params.append('month', monthVal);
   if (dateFrom) params.append('dateFrom', dateFrom);
   if (dateTo) params.append('dateTo', dateTo);
   const token = getToken();
@@ -1651,3 +1658,146 @@ async function exportZoneCSV(zone) {
     showToast('Ralat rangkaian: gagal export CSV');
   }
 }
+
+// ==================== MONTHLY ARCHIVES ====================
+
+async function loadMonths() {
+  try {
+    const res = await apiFetch('/api/months');
+    const months = await res.json();
+    const dropdowns = ['filter-month', 'vt-filter-month', 'db-filter-month', 'wg-filter-month'];
+    dropdowns.forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Semua Bulan</option>';
+      months.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        sel.appendChild(opt);
+      });
+      sel.value = current;
+    });
+  } catch (e) { console.error('Failed to load months', e); }
+}
+
+async function loadArchives() {
+  try {
+    const res = await apiFetch('/api/archives');
+    const archives = await res.json();
+    const tbody = document.getElementById('archives-table');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!archives.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;">Tiada arkib dijumpai</td></tr>';
+      return;
+    }
+    const zoneLabels = { 'parking': 'AMD Parking', 'vista-tiara': 'Vista Tiara', 'danga-bay': 'Danga Bay', 'warung': 'Warung' };
+    archives.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.month_label}</td>
+        <td>${zoneLabels[a.zone] || a.zone}</td>
+        <td>${a.receipt_count}</td>
+        <td>RM ${parseFloat(a.total_revenue || 0).toFixed(2)}</td>
+        <td>${a.created_at ? new Date(a.created_at).toLocaleString('ms-MY') : '-'}</td>
+        <td>
+          <button class="btn btn-small btn-secondary btn-archive-export" data-id="${a.id}">Export CSV</button>
+          <button class="btn btn-small btn-primary btn-archive-backup" data-id="${a.id}">Download Backup</button>
+          ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-small btn-danger btn-archive-delete" data-id="${a.id}">Padam</button>` : ''}
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-archive-export').forEach(btn => btn.addEventListener('click', () => downloadArchiveCSV(parseInt(btn.dataset.id))));
+    tbody.querySelectorAll('.btn-archive-backup').forEach(btn => btn.addEventListener('click', () => downloadArchiveBackup(parseInt(btn.dataset.id))));
+    tbody.querySelectorAll('.btn-archive-delete').forEach(btn => btn.addEventListener('click', async () => {
+      if (!confirm('Padam arkib ini?')) return;
+      const res = await apiFetch(`/api/archives/${parseInt(btn.dataset.id)}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.error) { showToast('Ralat: ' + result.error); return; }
+      showToast('Arkib dipadam');
+      loadArchives();
+    }));
+  } catch (e) { console.error('Failed to load archives', e); }
+}
+
+async function downloadArchiveCSV(id) {
+  const token = getToken();
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/archives/${id}/export`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) { showToast('Ralat: gagal export'); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `archive_${id}.csv`;
+    a.click();
+    showToast('CSV dieksport');
+  } catch (e) { showToast('Ralat rangkaian'); }
+}
+
+async function downloadArchiveBackup(id) {
+  const token = getToken();
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/archives/${id}/backup`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) { showToast('Ralat: backup tidak tersedia. Klik "Backup ke DB" dahulu.'); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `backup_archive_${id}.zip`;
+    a.click();
+    showToast('Backup dimuat turun');
+  } catch (e) { showToast('Ralat rangkaian'); }
+}
+
+function initArchiveControls() {
+  const yearSel = document.getElementById('archive-year');
+  const monthSel = document.getElementById('archive-month');
+  const btnArchive = document.getElementById('btn-archive-now');
+  const btnBackup = document.getElementById('btn-auto-backup');
+  if (!yearSel) return;
+  const now = new Date();
+  for (let y = now.getFullYear(); y >= 2020; y--) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+  const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth();
+  const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  yearSel.value = prevYear;
+  monthSel.value = prevMonth;
+  btnArchive.addEventListener('click', async () => {
+    if (!confirm(`Archive semua invoice untuk ${monthSel.options[monthSel.selectedIndex].text} ${yearSel.value}?`)) return;
+    try {
+      const res = await apiFetch('/api/archive/monthly', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: parseInt(yearSel.value), month: parseInt(monthSel.value) })
+      });
+      const result = await res.json();
+      if (result.error) { showToast('Ralat: ' + result.error); return; }
+      showToast(`Arkib ${result.month} berjaya dibuat`);
+      loadArchives();
+    } catch (e) { showToast('Ralat rangkaian'); }
+  });
+  btnBackup.addEventListener('click', async () => {
+    if (!confirm(`Backup semua data untuk ${monthSel.options[monthSel.selectedIndex].text} ${yearSel.value} ke database?`)) return;
+    try {
+      const res = await apiFetch('/api/backup/auto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: parseInt(yearSel.value), month: parseInt(monthSel.value) })
+      });
+      const result = await res.json();
+      if (result.error) { showToast('Ralat: ' + result.error); return; }
+      showToast(`Backup ${result.month} berjaya disimpan ke DB`);
+    } catch (e) { showToast('Ralat rangkaian'); }
+  });
+}
+
+initArchiveControls();

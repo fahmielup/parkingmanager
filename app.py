@@ -259,6 +259,20 @@ def init_db():
             value TEXT
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS monthly_archives (
+            id SERIAL PRIMARY KEY,
+            month_label TEXT NOT NULL,
+            year INTEGER NOT NULL,
+            month INTEGER NOT NULL,
+            zone TEXT NOT NULL,
+            receipt_count INTEGER DEFAULT 0,
+            total_revenue REAL DEFAULT 0,
+            archive_data TEXT,
+            backup_data TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
     conn.commit()
     cursor.close()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -758,6 +772,10 @@ def api_get_receipts():
             query += " AND plan IN ('Warung Bulanan')"
         elif zone == 'parking':
             query += " AND plan NOT IN ('VT Transport Bulanan', 'VT Family Promo', 'DB Transport Bulanan', 'DB Family Promo', 'Warung Bulanan')"
+    month = request.args.get('month', '')
+    if month:
+        query += " AND TO_CHAR(created_at::timestamp, 'YYYY-MM') = %s"
+        params.append(month)
     date_from = request.args.get('dateFrom', '')
     if date_from:
         query += ' AND created_at >= %s'
@@ -1277,6 +1295,10 @@ def api_export_csv():
             query += " AND plan IN ('Warung Bulanan')"
         elif zone == 'parking':
             query += " AND plan NOT IN ('VT Transport Bulanan', 'VT Family Promo', 'DB Transport Bulanan', 'DB Family Promo', 'Warung Bulanan')"
+    month = request.args.get('month', '')
+    if month:
+        query += " AND TO_CHAR(created_at::timestamp, 'YYYY-MM') = %s"
+        params.append(month)
     date_from = request.args.get('dateFrom', '')
     if date_from:
         query += ' AND created_at >= %s'
@@ -1600,6 +1622,241 @@ def api_delete_backup(filename):
         file_path.unlink()
     log_audit('DELETE_BACKUP', {'filename': filename})
     return jsonify({'success': True})
+
+
+# ==================== MONTHLY ARCHIVES ====================
+
+@app.route('/api/months', methods=['GET'])
+@login_required
+def api_get_months():
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT DISTINCT TO_CHAR(created_at::timestamp, 'YYYY-MM') as month,
+               TO_CHAR(created_at::timestamp, 'Month YYYY') as label
+        FROM receipts
+        ORDER BY month DESC
+    """)
+    months = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify([{'value': m['month'], 'label': m['label'].strip()} for m in months])
+
+
+@app.route('/api/archives', methods=['GET'])
+@login_required
+def api_get_archives():
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT id, month_label, year, month, zone, receipt_count, total_revenue, created_at FROM monthly_archives ORDER BY year DESC, month DESC, zone')
+    archives = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify([row_to_dict(a) for a in archives])
+
+
+@app.route('/api/archives/<int:archive_id>', methods=['GET'])
+@login_required
+def api_get_archive(archive_id):
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM monthly_archives WHERE id = %s', (archive_id,))
+    archive = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if not archive:
+        return jsonify({'error': 'Archive not found'}), 404
+    result = row_to_dict(archive)
+    if result.get('archive_data'):
+        result['archive_data'] = json.loads(result['archive_data'])
+    return jsonify(result)
+
+
+@app.route('/api/archives/<int:archive_id>/export', methods=['GET'])
+@login_required
+def api_export_archive(archive_id):
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM monthly_archives WHERE id = %s', (archive_id,))
+    archive = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if not archive or not archive['archive_data']:
+        return jsonify({'error': 'Archive not found or empty'}), 404
+    receipts = json.loads(archive['archive_data'])
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Invoice Number', 'Customer', 'Phone', 'Vehicle', 'Slot', 'Plan', 'Status',
+                     'Amount', 'Payment Method', 'Entry Time', 'Exit Time', 'Duration', 'Source', 'Created At'])
+    for row in receipts:
+        writer.writerow([
+            row.get('id', ''), row.get('receipt_number', ''), row.get('customer_name', ''),
+            row.get('phone', ''), row.get('vehicle_number', ''), row.get('slot_code', ''),
+            row.get('plan', ''), row.get('status', ''), row.get('amount', ''),
+            row.get('payment_method', ''), row.get('entry_time', ''), row.get('exit_time', ''),
+            row.get('duration_minutes', ''), row.get('source', ''), row.get('created_at', '')
+        ])
+    output.seek(0)
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8-sig')),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'archive_{archive["month_label"].replace(" ", "_")}_{archive["zone"]}.csv'
+    )
+
+
+@app.route('/api/archives/<int:archive_id>/backup', methods=['GET'])
+@login_required
+def api_download_archive_backup(archive_id):
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM monthly_archives WHERE id = %s', (archive_id,))
+    archive = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if not archive or not archive['backup_data']:
+        return jsonify({'error': 'Backup not found'}), 404
+    backup_bytes = base64.b64decode(archive['backup_data'])
+    return send_file(
+        io.BytesIO(backup_bytes),
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f'backup_{archive["month_label"].replace(" ", "_")}_{archive["zone"]}.zip'
+    )
+
+
+@app.route('/api/archives/<int:archive_id>', methods=['DELETE'])
+@admin_required
+def api_delete_archive(archive_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM monthly_archives WHERE id = %s', (archive_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    log_audit('DELETE_ARCHIVE', {'archive_id': archive_id})
+    return jsonify({'success': True})
+
+
+@app.route('/api/archive/monthly', methods=['POST'])
+@admin_required
+def api_archive_monthly():
+    data = request.json or {}
+    target_year = data.get('year')
+    target_month = data.get('month')
+    if target_year:
+        target_year = int(target_year)
+    if target_month:
+        target_month = int(target_month)
+    if not target_year or not target_month:
+        now = datetime.now()
+        if now.month == 1:
+            target_year = now.year - 1
+            target_month = 12
+        else:
+            target_year = now.year
+            target_month = now.month - 1
+    month_str = f'{target_year}-{target_month:02d}'
+    month_names = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December']
+    month_label = f'{month_names[target_month - 1]} {target_year}'
+    zones = ['parking', 'vista-tiara', 'danga-bay', 'warung']
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    results = []
+    for zone in zones:
+        query = 'SELECT * FROM receipts WHERE 1=1'
+        params = []
+        query += " AND TO_CHAR(created_at::timestamp, 'YYYY-MM') = %s"
+        params.append(month_str)
+        if zone == 'vista-tiara':
+            query += " AND plan IN ('VT Transport Bulanan', 'VT Family Promo')"
+        elif zone == 'danga-bay':
+            query += " AND plan IN ('DB Transport Bulanan', 'DB Family Promo')"
+        elif zone == 'warung':
+            query += " AND plan IN ('Warung Bulanan')"
+        elif zone == 'parking':
+            query += " AND plan NOT IN ('VT Transport Bulanan', 'VT Family Promo', 'DB Transport Bulanan', 'DB Family Promo', 'Warung Bulanan')"
+        query += ' ORDER BY created_at DESC'
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        if not rows:
+            continue
+        receipts_list = [row_to_dict(r) for r in rows]
+        total_revenue = sum(float(r.get('amount') or 0) for r in receipts_list)
+        archive_json = json.dumps(receipts_list, default=str)
+        cursor.execute('SELECT id FROM monthly_archives WHERE year = %s AND month = %s AND zone = %s',
+                       (target_year, target_month, zone))
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute('''
+                UPDATE monthly_archives SET month_label=%s, receipt_count=%s, total_revenue=%s, archive_data=%s, created_at=CURRENT_TIMESTAMP
+                WHERE id=%s
+            ''', (month_label, len(receipts_list), total_revenue, archive_json, existing['id']))
+        else:
+            cursor.execute('''
+                INSERT INTO monthly_archives (month_label, year, month, zone, receipt_count, total_revenue, archive_data)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', (month_label, target_year, target_month, zone, len(receipts_list), total_revenue, archive_json))
+        conn.commit()
+        results.append({'zone': zone, 'receipt_count': len(receipts_list), 'total_revenue': total_revenue})
+    cursor.close()
+    conn.close()
+    log_audit('ARCHIVE_MONTHLY', {'month': month_str, 'results': results})
+    return jsonify({'success': True, 'month': month_label, 'archives': results})
+
+
+@app.route('/api/backup/auto', methods=['POST'])
+@admin_required
+def api_auto_backup():
+    data = request.json or {}
+    target_year = data.get('year')
+    target_month = data.get('month')
+    if target_year:
+        target_year = int(target_year)
+    if target_month:
+        target_month = int(target_month)
+    if not target_year or not target_month:
+        now = datetime.now()
+        if now.month == 1:
+            target_year = now.year - 1
+            target_month = 12
+        else:
+            target_year = now.year
+            target_month = now.month - 1
+    month_str = f'{target_year}-{target_month:02d}'
+    month_names = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December']
+    month_label = f'{month_names[target_month - 1]} {target_year}'
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        settings = get_settings()
+        zf.writestr('settings.json', json.dumps(settings, default=str))
+        cursor.execute('SELECT * FROM receipts WHERE TO_CHAR(created_at::timestamp, \'YYYY-MM\') = %s ORDER BY created_at DESC', (month_str,))
+        receipts = cursor.fetchall()
+        zf.writestr('receipts.json', json.dumps([row_to_dict(r) for r in receipts], default=str))
+        cursor.execute('SELECT * FROM customers')
+        customers = cursor.fetchall()
+        zf.writestr('customers.json', json.dumps([row_to_dict(r) for r in customers], default=str))
+        cursor.execute('SELECT * FROM transport_customers')
+        transport = cursor.fetchall()
+        zf.writestr('transport_customers.json', json.dumps([row_to_dict(r) for r in transport], default=str))
+        cursor.execute('SELECT * FROM users')
+        users = cursor.fetchall()
+        zf.writestr('users.json', json.dumps([{k: v for k, v in row_to_dict(u).items() if k != 'password_hash'} for u in users], default=str))
+    buf.seek(0)
+    backup_b64 = base64.b64encode(buf.getvalue()).decode('ascii')
+    cursor.execute('SELECT id FROM monthly_archives WHERE year = %s AND month = %s', (target_year, target_month))
+    archives = cursor.fetchall()
+    for archive in archives:
+        cursor.execute('UPDATE monthly_archives SET backup_data = %s WHERE id = %s', (backup_b64, archive['id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    log_audit('AUTO_BACKUP', {'month': month_str, 'size': len(backup_b64)})
+    return jsonify({'success': True, 'month': month_label, 'backup_size': len(backup_b64)})
 
 
 if __name__ == '__main__':
