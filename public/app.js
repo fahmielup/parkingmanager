@@ -240,6 +240,7 @@ const API = {
 
 const views = {
   dashboard: document.getElementById('view-dashboard'),
+  'total-dashboard': document.getElementById('view-total-dashboard'),
   receipts: document.getElementById('view-receipts'),
   create: document.getElementById('view-create'),
   whatsapp: document.getElementById('view-whatsapp'),
