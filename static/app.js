@@ -70,6 +70,10 @@ const API = {
     });
     return res.json ? res.json() : res;
   },
+  async repairReceiptZones() {
+    const res = await apiFetch('/api/receipts/repair-zones', { method: 'POST' });
+    return res.json ? res.json() : res;
+  },
   async updateReceipt(id, data) {
     const res = await apiFetch(`/api/receipts/${id}`, {
       method: 'PUT',
@@ -835,6 +839,7 @@ document.getElementById('create-form-vt').addEventListener('submit', async (e) =
   const data = Object.fromEntries(new FormData(form).entries());
   data.vehicleNumber = data.customerName || '-';
   data.ratePerHour = '0';
+  data.plan = 'VT Transport Bulanan';
   const pax = parseInt(data.pax) || 1;
   if (pax > 1 && !data.notes) {
     data.notes = `${pax} pax (1st: RM360, ${pax - 1}x RM180)`;
@@ -858,6 +863,7 @@ document.getElementById('create-form-db').addEventListener('submit', async (e) =
   const data = Object.fromEntries(new FormData(form).entries());
   data.vehicleNumber = data.customerName || '-';
   data.ratePerHour = '0';
+  data.plan = 'DB Transport Bulanan';
   const pax = parseInt(data.pax) || 1;
   if (pax > 1 && !data.notes) {
     data.notes = `${pax} pax (1st: RM400, ${pax - 1}x RM180)`;
@@ -881,6 +887,7 @@ document.getElementById('create-form-warung').addEventListener('submit', async (
   const data = Object.fromEntries(new FormData(form).entries());
   data.vehicleNumber = data.customerName || '-';
   data.ratePerHour = '0';
+  data.plan = 'Warung Bulanan';
   const result = await API.createReceipt(data);
   if (result.error) { showToast('Ralat: ' + result.error); return; }
   showToast('Invoice berjaya disimpan');
@@ -1318,6 +1325,18 @@ if (btnClearTerminated) {
     if (result.error) { showToast('Ralat: ' + result.error); return; }
     showToast(`${result.deleted || 0} rekod terminated telah dipadam`);
     loadDashboardCustomers();
+    loadStats();
+  });
+}
+
+const btnRepairReceiptZones = document.getElementById('btn-repair-receipt-zones');
+if (btnRepairReceiptZones) {
+  btnRepairReceiptZones.addEventListener('click', async () => {
+    if (!confirm('Pindahkan invoice Harian Parking yang sepadan dengan harga Vista Tiara dan Danga Bay? Tindakan ini tidak boleh dibatalkan secara automatik.')) return;
+    const result = await API.repairReceiptZones();
+    if (result.error) { showToast('Ralat: ' + result.error); return; }
+    showToast(`Invoice dipindahkan — Vista Tiara: ${result.vista_tiara || 0}, Danga Bay: ${result.danga_bay || 0}`);
+    loadReceipts();
     loadStats();
   });
 }

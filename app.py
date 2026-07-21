@@ -840,6 +840,42 @@ def api_create_receipt():
     return jsonify({'success': True, 'receipt': receipt_dict})
 
 
+@app.route('/api/receipts/repair-zones', methods=['POST'])
+@admin_required
+def api_repair_receipt_zones():
+    conn = get_db()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT id, amount FROM receipts WHERE plan = %s", ('Harian Parking',))
+    receipts = cursor.fetchall()
+    vista_ids = []
+    danga_ids = []
+
+    for receipt in receipts:
+        amount_cents = int(round(float(receipt['amount'] or 0) * 100))
+        if amount_cents >= 36000 and (amount_cents - 36000) % 18000 == 0:
+            vista_ids.append(receipt['id'])
+        elif amount_cents >= 40000 and (amount_cents - 40000) % 18000 == 0:
+            danga_ids.append(receipt['id'])
+
+    if vista_ids:
+        cursor.execute(
+            "UPDATE receipts SET plan = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s)",
+            ('VT Transport Bulanan', vista_ids)
+        )
+    if danga_ids:
+        cursor.execute(
+            "UPDATE receipts SET plan = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s)",
+            ('DB Transport Bulanan', danga_ids)
+        )
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    result = {'vista_tiara': len(vista_ids), 'danga_bay': len(danga_ids)}
+    log_audit('REPAIR_RECEIPT_ZONES', result)
+    return jsonify({'success': True, **result})
+
+
 @app.route('/api/receipts/<int:receipt_id>', methods=['GET'])
 @login_required
 def api_get_receipt(receipt_id):
