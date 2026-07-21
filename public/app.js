@@ -578,12 +578,20 @@ function fmtReceiptDate(val) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 }
 
+function setZonePaymentDates() {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  document.querySelectorAll('.zone-payment-date').forEach(input => {
+    input.value = today;
+  });
+}
+
 function receiptHtml(r) {
   const logo = currentSettings.company_logo ? `<img src="${currentSettings.company_logo}" class="receipt-logo">` : '';
   const qr = currentSettings.company_qr_code ? `<img src="${currentSettings.company_qr_code}" class="receipt-qr">` : '';
   const companyName = (currentSettings.company_name || 'Parking Manager').toUpperCase();
   const receiptTitle = (currentSettings.receipt_title || 'PAYMENT RECEIPT').toUpperCase();
-  const paymentDate = fmtReceiptDate(r.created_at);
+  const paymentDate = fmtReceiptDate(r.payment_date);
   const arriveDate = r.entry_time ? fmtReceiptDate(r.entry_time) : '-';
   const departDate = r.exit_time ? fmtReceiptDate(r.exit_time) : '-';
   const total = r.amount ? r.amount.toFixed(2) : '0.00';
@@ -853,6 +861,7 @@ document.getElementById('create-form-vt').addEventListener('submit', async (e) =
   if (result.error) { showToast('Ralat: ' + result.error); return; }
   showToast('Invoice berjaya disimpan');
   form.reset();
+  setZonePaymentDates();
   calcVTTotal();
   printReceipt(result.receipt.id);
   loadReceipts();
@@ -877,6 +886,7 @@ document.getElementById('create-form-db').addEventListener('submit', async (e) =
   if (result.error) { showToast('Ralat: ' + result.error); return; }
   showToast('Invoice berjaya disimpan');
   form.reset();
+  setZonePaymentDates();
   calcDBTotal();
   printReceipt(result.receipt.id);
   loadReceipts();
@@ -895,6 +905,7 @@ document.getElementById('create-form-warung').addEventListener('submit', async (
   if (result.error) { showToast('Ralat: ' + result.error); return; }
   showToast('Invoice berjaya disimpan');
   form.reset();
+  setZonePaymentDates();
   calcWgTotal();
   printReceipt(result.receipt.id);
   loadReceipts();
@@ -928,6 +939,7 @@ document.getElementById('wg-pax').addEventListener('input', calcWgTotal);
 calcVTTotal();
 calcDBTotal();
 calcWgTotal();
+setZonePaymentDates();
 
 document.getElementById('whatsapp-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1563,7 +1575,7 @@ async function loadZoneReceipts(zone) {
         <td>${planBadge(r.plan)}</td>
         <td>RM ${formatCurrency(r.amount)}</td>
         <td>${statusBadge(r.status)}</td>
-        <td>${formatDateTime(r.created_at)}</td>`;
+        <td>${formatDate(r.payment_date)}</td>`;
       tbody.appendChild(tr);
     });
   } catch (e) { console.error(e); }
@@ -1586,7 +1598,7 @@ async function loadZoneInvoices(zone) {
     const tbody = document.getElementById(`${prefix}-invoices-table`);
     tbody.innerHTML = '';
     if (!receipts.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;">Tiada invoice dijumpai</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;">Tiada invoice dijumpai</td></tr>';
       return;
     }
     receipts.forEach(r => {
@@ -1599,6 +1611,7 @@ async function loadZoneInvoices(zone) {
         <td>${statusBadge(r.status)}</td>
         <td>${sourceBadge(r.source)}</td>
         <td>RM ${formatCurrency(r.amount)}</td>
+        <td>${formatDate(r.payment_date)}</td>
         <td>
           <button class="btn btn-small btn-secondary btn-view" data-id="${r.id}">Lihat</button>
           <button class="btn btn-small btn-primary btn-print" data-id="${r.id}">Cetak</button>

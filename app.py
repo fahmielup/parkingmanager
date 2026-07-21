@@ -147,6 +147,7 @@ def init_db():
             rate_per_hour REAL DEFAULT 0,
             amount REAL DEFAULT 0,
             payment_method TEXT DEFAULT 'Cash',
+            payment_date TEXT,
             plan TEXT DEFAULT 'Harian Parking',
             status TEXT DEFAULT 'Pending',
             notes TEXT,
@@ -158,6 +159,7 @@ def init_db():
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    cursor.execute('ALTER TABLE receipts ADD COLUMN IF NOT EXISTS payment_date TEXT')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -807,8 +809,8 @@ def api_create_receipt():
         INSERT INTO receipts (
             receipt_number, customer_name, phone, vehicle_number, slot_code,
             entry_time, exit_time, duration_minutes, rate_per_hour, amount,
-            payment_method, plan, status, notes, source, created_by
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            payment_method, payment_date, plan, status, notes, source, created_by
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
     ''', (
         receipt_number,
@@ -822,6 +824,7 @@ def api_create_receipt():
         rate,
         amount,
         data.get('paymentMethod', 'Cash'),
+        data.get('paymentDate') or None,
         data.get('plan', 'Harian Parking'),
         data.get('status', 'Pending'),
         data.get('notes', ''),
@@ -915,6 +918,7 @@ def api_update_receipt(receipt_id):
         'rate_per_hour': 'ratePerHour',
         'amount': 'amount',
         'payment_method': 'paymentMethod',
+        'payment_date': 'paymentDate',
         'plan': 'plan',
         'status': 'status',
         'notes': 'notes'
@@ -1351,11 +1355,11 @@ def api_export_csv():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['ID', 'Invoice Number', 'Customer', 'Phone', 'Vehicle', 'Slot', 'Plan', 'Status',
-                     'Amount', 'Payment Method', 'Entry Time', 'Exit Time', 'Duration', 'Source', 'Created At'])
+                     'Amount', 'Payment Method', 'Payment Date', 'Entry Time', 'Exit Time', 'Duration', 'Source', 'Created At'])
     for row in rows:
         writer.writerow([
             row['id'], row['receipt_number'], row['customer_name'], row['phone'], row['vehicle_number'],
-            row['slot_code'], row['plan'], row['status'], row['amount'], row['payment_method'],
+            row['slot_code'], row['plan'], row['status'], row['amount'], row['payment_method'], row['payment_date'],
             row['entry_time'], row['exit_time'], row['duration_minutes'], row['source'], row['created_at']
         ])
     output.seek(0)
