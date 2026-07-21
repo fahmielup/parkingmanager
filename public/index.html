@@ -37,6 +37,11 @@
           </div>
         </div>
 
+        <button class="nav-item" data-view="total-dashboard">
+          <span class="icon">&#x1F4C8;</span>
+          <span>Total Dashboard</span>
+        </button>
+
         <button class="nav-item" data-view="create">
           <span class="icon">&#x2795;</span>
           <span>Buat Invoice</span>
@@ -255,6 +260,44 @@
             <div class="chart-card">
               <h4>Pecahan Pelan</h4>
               <canvas id="plan-chart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-total-dashboard" class="view">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Keseluruhan Invoice (RM)</div>
+            <div class="stat-value" id="total-dashboard-revenue">0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jumlah Keseluruhan Invoice</div>
+            <div class="stat-value" id="total-dashboard-count">0</div>
+          </div>
+        </div>
+        <div class="dashboard-section">
+          <h3>Jumlah Mengikut Bahagian</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">AMD Parking</div>
+              <div class="stat-value" id="total-amd-revenue">0.00</div>
+              <div class="stat-label" id="total-amd-count">0 invoice</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Vista Tiara</div>
+              <div class="stat-value" id="total-vt-revenue">0.00</div>
+              <div class="stat-label" id="total-vt-count">0 invoice</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Danga Bay</div>
+              <div class="stat-value" id="total-db-revenue">0.00</div>
+              <div class="stat-label" id="total-db-count">0 invoice</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Warung</div>
+              <div class="stat-value" id="total-wg-revenue">0.00</div>
+              <div class="stat-label" id="total-wg-count">0 invoice</div>
             </div>
           </div>
         </div>

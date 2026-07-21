@@ -279,6 +279,7 @@ function showView(viewName) {
 
   const titles = {
     dashboard: 'AMD Parking',
+    'total-dashboard': 'Total Dashboard',
     receipts: 'Invoice AMD Parking',
     create: 'Buat Invoice Baru',
     whatsapp: 'Simpan Resit Bayaran',
@@ -299,6 +300,7 @@ function showView(viewName) {
 
   if (viewName === 'dashboard' || viewName === 'receipts') loadReceipts();
   if (viewName === 'dashboard') { loadStats(); loadDashboardCustomers(); }
+  if (viewName === 'total-dashboard') loadTotalDashboard();
   if (viewName === 'vista-tiara') { loadTransportCustomers('vista-tiara'); loadZoneReceipts('vista-tiara'); }
   if (viewName === 'danga-bay') { loadTransportCustomers('danga-bay'); loadZoneReceipts('danga-bay'); }
   if (viewName === 'warung') { loadTransportCustomers('warung'); loadZoneReceipts('warung'); }
@@ -375,6 +377,34 @@ async function loadStats() {
     if (currentUser && currentUser.role === 'admin') renderCharts(stats);
   } catch (e) {
     console.error(e);
+  }
+}
+
+async function loadTotalDashboard() {
+  try {
+    const [amd, vistaTiara, dangaBay, warung] = await Promise.all([
+      API.getStats('parking'),
+      API.getStats('vista-tiara'),
+      API.getStats('danga-bay'),
+      API.getStats('warung')
+    ]);
+    const zones = [
+      ['amd', amd],
+      ['vt', vistaTiara],
+      ['db', dangaBay],
+      ['wg', warung]
+    ];
+    const totalRevenue = zones.reduce((sum, [, stats]) => sum + Number(stats.invoice_revenue || 0), 0);
+    const totalCount = zones.reduce((sum, [, stats]) => sum + Number(stats.invoice_count || 0), 0);
+    document.getElementById('total-dashboard-revenue').textContent = totalRevenue.toFixed(2);
+    document.getElementById('total-dashboard-count').textContent = totalCount;
+    zones.forEach(([prefix, stats]) => {
+      document.getElementById(`total-${prefix}-revenue`).textContent = Number(stats.invoice_revenue || 0).toFixed(2);
+      document.getElementById(`total-${prefix}-count`).textContent = `${stats.invoice_count || 0} invoice`;
+    });
+  } catch (e) {
+    console.error(e);
+    showToast('Ralat memuat jumlah dashboard');
   }
 }
 
